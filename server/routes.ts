@@ -246,10 +246,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Add funds to balance
+  // Add funds to balance (Cash only)
   router.post("/user/add-funds", authenticateToken, async (req: any, res) => {
     try {
-      const { amount, paymentMethod } = req.body;
+      const { amount } = req.body;
       
       if (!amount || amount <= 0) {
         return res.status(400).json({ message: "Valid amount is required" });
@@ -261,7 +261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Update user balance
+      // Update user balance (Cash is the only payment method)
       const newBalance = user.balance + Number(amount);
       await storage.updateUser(user.id, { balance: newBalance });
       
@@ -270,9 +270,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: user.id,
         amount: Number(amount),
         type: "add_funds",
-        description: `Added funds via ${paymentMethod}`,
+        description: `নগদ টাকা জমা করা হয়েছে`,
         date: new Date().toISOString()
       });
+      
+      // Get updated user with new balance
+      const updatedUser = await storage.getUser(req.user.id);
+      
+      // Send email notification about balance update
+      if (updatedUser) {
+        try {
+          // Import at function scope to avoid circular dependency
+          const { sendTransactionNotification } = require('./notification');
+          await sendTransactionNotification(updatedUser, Number(amount), "add_funds");
+        } catch (notificationError) {
+          console.error("Notification error:", notificationError);
+          // Don't fail the transaction if notification fails
+        }
+      }
       
       res.status(200).json({ 
         message: "Funds added successfully", 
@@ -307,9 +322,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newBalance = user.balance - Number(amount);
       await storage.updateUser(user.id, { balance: newBalance });
       
+      let savingsGoal;
+      
       // If savingsGoalId is provided, update goal progress
       if (savingsGoalId) {
-        const savingsGoal = await storage.getSavingsGoal(Number(savingsGoalId));
+        savingsGoal = await storage.getSavingsGoal(Number(savingsGoalId));
         
         if (!savingsGoal || savingsGoal.userId !== user.id) {
           return res.status(404).json({ message: "Savings goal not found" });
@@ -317,12 +334,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const newCurrentAmount = savingsGoal.currentAmount + Number(amount);
         await storage.updateSavingsGoal(savingsGoal.id, { currentAmount: newCurrentAmount });
+        
+        // Check if goal has been achieved
+        const updatedGoal = await storage.getSavingsGoal(Number(savingsGoalId));
+        if (updatedGoal && updatedGoal.currentAmount >= updatedGoal.targetAmount) {
+          try {
+            // Import at function scope to avoid circular dependency
+            const { sendGoalAchievedNotification } = require('./notification');
+            await sendGoalAchievedNotification(user, updatedGoal.name);
+          } catch (notificationError) {
+            console.error("Goal achievement notification error:", notificationError);
+            // Don't fail the transaction if notification fails
+          }
+        }
       }
       
       // Record transaction
       const description = savingsGoalId 
-        ? `Deposit to ${(await storage.getSavingsGoal(Number(savingsGoalId)))?.name} savings goal` 
-        : "General savings deposit";
+        ? `${savingsGoal?.name} সেভিংস গোলে জমা করা হয়েছে` 
+        : "সাধারণ সেভিংসে জমা করা হয়েছে";
       
       await storage.createTransaction({
         userId: user.id,
@@ -332,6 +362,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         savingsGoalId: savingsGoalId ? Number(savingsGoalId) : null,
         date: new Date().toISOString()
       });
+      
+      // Get updated user with new balance
+      const updatedUser = await storage.getUser(req.user.id);
+      
+      // Send email notification about balance update
+      if (updatedUser) {
+        try {
+          // Import at function scope to avoid circular dependency
+          const { sendTransactionNotification } = require('./notification');
+          await sendTransactionNotification(updatedUser, Number(amount), "deposit");
+        } catch (notificationError) {
+          console.error("Notification error:", notificationError);
+          // Don't fail the transaction if notification fails
+        }
+      }
       
       res.status(200).json({ 
         message: "Deposit successful", 

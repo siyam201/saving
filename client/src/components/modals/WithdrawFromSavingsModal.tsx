@@ -94,7 +94,7 @@ export function WithdrawFromSavingsModal({ isOpen, onClose }: WithdrawFromSaving
     
     // Validate amount
     const amountValue = parseFloat(amount);
-    if (!amount || isNaN(amountValue) {
+    if (!amount || isNaN(amountValue)) {
       toast({
         title: "অবৈধ পরিমাণ",
         description: "অনুগ্রহ করে একটি বৈধ পরিমাণ উল্লেখ করুন।",

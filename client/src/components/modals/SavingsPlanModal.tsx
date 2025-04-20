@@ -65,7 +65,7 @@ export function SavingsPlanModal({ isOpen, onClose }: SavingsPlanModalProps) {
         frequency: frequencyMap[frequency] || "weekly",
         dayOfWeek: frequency === "সাপ্তাহিক" ? dayOfWeek : null,
         dayOfMonth: frequency === "মাসিক" ? parseInt(dayOfMonth) : null,
-        savingsGoalId: savingsGoalId || null,
+        savingsGoalId: savingsGoalId === "none" ? null : parseInt(savingsGoalId),
       });
       
       toast({
@@ -205,7 +205,7 @@ export function SavingsPlanModal({ isOpen, onClose }: SavingsPlanModalProps) {
               <SelectValue placeholder="টার্গেট নির্বাচন করুন" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="" className="font-bangla">টার্গেট ছাড়া সাধারণ সেভিংস</SelectItem>
+              <SelectItem value="none" className="font-bangla">টার্গেট ছাড়া সাধারণ সেভিংস</SelectItem>
               {savingsGoals?.map((goal) => (
                 <SelectItem key={goal.id} value={String(goal.id)} className="font-bangla">
                   {goal.name}

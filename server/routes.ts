@@ -302,6 +302,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Withdraw from savings
+  router.post("/user/withdraw-from-savings", authenticateToken, async (req: any, res) => {
+    try {
+      const { amount, savingsGoalId, reason } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: "Valid amount is required" });
+      }
+      
+      if (!savingsGoalId) {
+        return res.status(400).json({ message: "Savings goal ID is required" });
+      }
+      
+      const user = await storage.getUser(req.user.id);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Get savings goal
+      const savingsGoal = await storage.getSavingsGoal(Number(savingsGoalId));
+      
+      if (!savingsGoal || savingsGoal.userId !== user.id) {
+        return res.status(404).json({ message: "Savings goal not found" });
+      }
+      
+      // Check if savings goal has enough funds
+      if (savingsGoal.currentAmount < Number(amount)) {
+        return res.status(400).json({ message: "Insufficient funds in savings goal" });
+      }
+      
+      // Update savings goal balance
+      const newSavingsAmount = savingsGoal.currentAmount - Number(amount);
+      await storage.updateSavingsGoal(savingsGoal.id, { currentAmount: newSavingsAmount });
+      
+      // Update user balance
+      const newBalance = user.balance + Number(amount);
+      await storage.updateUser(user.id, { balance: newBalance });
+      
+      // Record transaction
+      await storage.createTransaction({
+        userId: user.id,
+        amount: Number(amount),
+        type: "withdraw_from_savings",
+        description: reason ? `${savingsGoal.name} থেকে উত্তোলন: ${reason}` : `${savingsGoal.name} থেকে টাকা উত্তোলন করা হয়েছে`,
+        savingsGoalId: Number(savingsGoalId),
+        date: new Date().toISOString()
+      });
+      
+      // Get updated user with new balance
+      const updatedUser = await storage.getUser(req.user.id);
+      
+      // Send email notification about the withdrawal
+      if (updatedUser) {
+        try {
+          await sendTransactionNotification(updatedUser, Number(amount), "withdraw_from_savings");
+        } catch (notificationError) {
+          console.error("Notification error:", notificationError);
+          // Don't fail the transaction if notification fails
+        }
+      }
+      
+      res.status(200).json({ 
+        message: "Withdrawal from savings successful", 
+        newBalance, 
+        newSavingsAmount
+      });
+    } catch (error) {
+      console.error("Withdrawal from savings error:", error);
+      res.status(500).json({ message: "Server error while making withdrawal from savings" });
+    }
+  });
+  
   // Withdraw funds from account
   router.post("/user/withdraw", authenticateToken, async (req: any, res) => {
     try {

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { AddFundsModal } from "@/components/modals/AddFundsModal";
 import { DepositFundsModal } from "@/components/modals/DepositFundsModal";
 import { WithdrawFundsModal } from "@/components/modals/WithdrawFundsModal";
+import { WithdrawFromSavingsModal } from "@/components/modals/WithdrawFromSavingsModal";
 import { SavingsGoalModal } from "@/components/modals/SavingsGoalModal";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowDownLeft, ArrowUpRight, Flag, PlusCircle, TrendingUp, Wallet } from "lucide-react";
@@ -19,6 +20,7 @@ export function Overview({ balance, totalSavings, savingsGoals }: OverviewProps)
   const [showAddFundsModal, setShowAddFundsModal] = useState(false);
   const [showDepositFundsModal, setShowDepositFundsModal] = useState(false);
   const [showWithdrawFundsModal, setShowWithdrawFundsModal] = useState(false);
+  const [showWithdrawFromSavingsModal, setShowWithdrawFromSavingsModal] = useState(false);
   const [showSavingsGoalModal, setShowSavingsGoalModal] = useState(false);
 
   // Get active goal with highest percentage for display
@@ -97,13 +99,20 @@ export function Overview({ balance, totalSavings, savingsGoals }: OverviewProps)
           </div>
         </CardContent>
         <CardFooter className="bg-gray-50 py-4">
-          <div className="text-sm">
+          <div className="text-sm flex justify-between">
             <Button 
               variant="link" 
               onClick={() => setShowDepositFundsModal(true)}
               className="p-0 h-auto font-medium text-primary-600 hover:text-primary-500 font-bangla"
             >
               টাকা জমা দিন <ArrowUpRight className="ml-1 h-4 w-4" />
+            </Button>
+            <Button 
+              variant="link" 
+              onClick={() => setShowWithdrawFromSavingsModal(true)}
+              className="p-0 h-auto font-medium text-amber-600 hover:text-amber-500 font-bangla"
+            >
+              সেভিংস থেকে আনুন <ArrowDownLeft className="ml-1 h-4 w-4" />
             </Button>
           </div>
         </CardFooter>
@@ -172,6 +181,11 @@ export function Overview({ balance, totalSavings, savingsGoals }: OverviewProps)
       <WithdrawFundsModal
         isOpen={showWithdrawFundsModal}
         onClose={() => setShowWithdrawFundsModal(false)}
+      />
+      
+      <WithdrawFromSavingsModal
+        isOpen={showWithdrawFromSavingsModal}
+        onClose={() => setShowWithdrawFromSavingsModal(false)}
       />
     </div>
   );

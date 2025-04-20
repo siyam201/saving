@@ -371,9 +371,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send email notification about balance update
       if (updatedUser) {
         try {
-          // Use imported notification service
-          const notificationService = await import('./notification');
-          await notificationService.sendTransactionNotification(updatedUser, Number(amount), "deposit");
+          // Use imported notification service directly
+          await sendTransactionNotification(updatedUser, Number(amount), "deposit");
         } catch (notificationError) {
           console.error("Notification error:", notificationError);
           // Don't fail the transaction if notification fails

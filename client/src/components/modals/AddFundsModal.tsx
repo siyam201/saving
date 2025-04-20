@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { FormEvent, useState } from "react";
 import { apiRequest } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { AlertTriangle } from "lucide-react";
 
 interface AddFundsModalProps {
   isOpen: boolean;
@@ -14,7 +14,6 @@ interface AddFundsModalProps {
 
 export function AddFundsModal({ isOpen, onClose }: AddFundsModalProps) {
   const [amount, setAmount] = useState<string>("");
-  const [paymentMethod, setPaymentMethod] = useState<string>("বিকাশ");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -33,8 +32,7 @@ export function AddFundsModal({ isOpen, onClose }: AddFundsModalProps) {
     setIsSubmitting(true);
     try {
       await apiRequest("POST", "/api/user/add-funds", {
-        amount: parseFloat(amount),
-        paymentMethod,
+        amount: parseFloat(amount)
       });
       
       toast({
@@ -45,7 +43,6 @@ export function AddFundsModal({ isOpen, onClose }: AddFundsModalProps) {
       
       // Reset form
       setAmount("");
-      setPaymentMethod("বিকাশ");
       
       // Refresh profile data
       queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
@@ -67,10 +64,20 @@ export function AddFundsModal({ isOpen, onClose }: AddFundsModalProps) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="ফান্ড অ্যাড করুন"
-      description="আপনার অ্যাকাউন্টে ফান্ড অ্যাড করতে নিচের ফর্মটি পূরণ করুন।"
+      title="নগদ টাকা যোগ করুন"
+      description="আপনার অ্যাকাউন্টে নগদ টাকা যোগ করতে নিচের ফর্মটি পূরণ করুন।"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="p-4 bg-amber-50 rounded-md border border-amber-200 mb-4">
+          <div className="flex items-start">
+            <AlertTriangle className="h-5 w-5 text-amber-500 mr-2 mt-0.5" />
+            <div className="text-sm text-amber-800 font-bangla">
+              <p className="font-medium">গুরুত্বপূর্ণ নোট:</p>
+              <p>এই সিস্টেমে শুধুমাত্র নগদ টাকা যোগ করা যাবে। অনলাইন পেমেন্ট (বিকাশ, নগদ, রকেট ইত্যাদি) সাপোর্ট করা হয়না।</p>
+            </div>
+          </div>
+        </div>
+        
         <div className="space-y-2">
           <label htmlFor="amount" className="block text-sm font-medium font-bangla">
             পরিমাণ (টাকা)
@@ -94,27 +101,6 @@ export function AddFundsModal({ isOpen, onClose }: AddFundsModalProps) {
           </div>
         </div>
         
-        <div className="space-y-2">
-          <label htmlFor="paymentMethod" className="block text-sm font-medium font-bangla">
-            পেমেন্ট মেথড
-          </label>
-          <Select
-            value={paymentMethod}
-            onValueChange={setPaymentMethod}
-            disabled={isSubmitting}
-          >
-            <SelectTrigger id="paymentMethod" className="font-bangla">
-              <SelectValue placeholder="পেমেন্ট মেথড নির্বাচন করুন" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="বিকাশ" className="font-bangla">বিকাশ</SelectItem>
-              <SelectItem value="নগদ" className="font-bangla">নগদ</SelectItem>
-              <SelectItem value="রকেট" className="font-bangla">রকেট</SelectItem>
-              <SelectItem value="ক্রেডিট কার্ড" className="font-bangla">ক্রেডিট কার্ড</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
         <div className="flex justify-end gap-2 pt-2">
           <Button
             type="button"
@@ -130,7 +116,7 @@ export function AddFundsModal({ isOpen, onClose }: AddFundsModalProps) {
             disabled={isSubmitting}
             className="font-bangla"
           >
-            {isSubmitting ? "প্রক্রিয়াধীন..." : "কনফার্ম"}
+            {isSubmitting ? "প্রক্রিয়াধীন..." : "জমা করুন"}
           </Button>
         </div>
       </form>

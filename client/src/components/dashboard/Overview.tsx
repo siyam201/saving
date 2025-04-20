@@ -18,6 +18,7 @@ interface OverviewProps {
 export function Overview({ balance, totalSavings, savingsGoals }: OverviewProps) {
   const [showAddFundsModal, setShowAddFundsModal] = useState(false);
   const [showDepositFundsModal, setShowDepositFundsModal] = useState(false);
+  const [showWithdrawFundsModal, setShowWithdrawFundsModal] = useState(false);
   const [showSavingsGoalModal, setShowSavingsGoalModal] = useState(false);
 
   // Get active goal with highest percentage for display
@@ -53,13 +54,20 @@ export function Overview({ balance, totalSavings, savingsGoals }: OverviewProps)
           </div>
         </CardContent>
         <CardFooter className="bg-gray-50 py-4">
-          <div className="text-sm">
+          <div className="text-sm flex justify-between">
             <Button 
               variant="link" 
               onClick={() => setShowAddFundsModal(true)}
               className="p-0 h-auto font-medium text-primary-600 hover:text-primary-500 font-bangla"
             >
               ফান্ড অ্যাড করুন <PlusCircle className="ml-1 h-4 w-4" />
+            </Button>
+            <Button 
+              variant="link" 
+              onClick={() => setShowWithdrawFundsModal(true)}
+              className="p-0 h-auto font-medium text-red-600 hover:text-red-500 font-bangla"
+            >
+              টাকা উত্তোলন <ArrowDownLeft className="ml-1 h-4 w-4" />
             </Button>
           </div>
         </CardFooter>
@@ -159,6 +167,11 @@ export function Overview({ balance, totalSavings, savingsGoals }: OverviewProps)
       <SavingsGoalModal 
         isOpen={showSavingsGoalModal} 
         onClose={() => setShowSavingsGoalModal(false)} 
+      />
+      
+      <WithdrawFundsModal
+        isOpen={showWithdrawFundsModal}
+        onClose={() => setShowWithdrawFundsModal(false)}
       />
     </div>
   );

@@ -302,6 +302,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Withdraw funds from account
+  router.post("/user/withdraw", authenticateToken, async (req: any, res) => {
+    try {
+      const { amount, reason } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: "Valid amount is required" });
+      }
+      
+      const user = await storage.getUser(req.user.id);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Check if user has enough balance
+      if (user.balance < amount) {
+        return res.status(400).json({ message: "Insufficient balance for withdrawal" });
+      }
+      
+      // Update user balance
+      const newBalance = user.balance - Number(amount);
+      await storage.updateUser(user.id, { balance: newBalance });
+      
+      // Record transaction
+      await storage.createTransaction({
+        userId: user.id,
+        amount: Number(amount),
+        type: "withdraw",
+        description: reason ? `উত্তোলন: ${reason}` : "টাকা উত্তোলন করা হয়েছে",
+        date: new Date().toISOString()
+      });
+      
+      // Get updated user with new balance
+      const updatedUser = await storage.getUser(req.user.id);
+      
+      // Send email notification about withdrawal
+      if (updatedUser) {
+        try {
+          // Use notification service
+          await sendTransactionNotification(updatedUser, Number(amount), "withdraw");
+        } catch (notificationError) {
+          console.error("Notification error:", notificationError);
+          // Don't fail the transaction if notification fails
+        }
+      }
+      
+      res.status(200).json({ 
+        message: "Withdrawal successful", 
+        newBalance 
+      });
+    } catch (error) {
+      console.error("Withdrawal error:", error);
+      res.status(500).json({ message: "Server error while making withdrawal" });
+    }
+  });
+  
   // Make deposit to savings
   router.post("/user/deposit", authenticateToken, async (req: any, res) => {
     try {

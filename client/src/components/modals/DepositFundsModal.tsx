@@ -124,7 +124,7 @@ export function DepositFundsModal({ isOpen, onClose }: DepositFundsModalProps) {
               <SelectValue placeholder="টার্গেট নির্বাচন করুন" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="" className="font-bangla">টার্গেট ছাড়া সাধারণ সেভিংস</SelectItem>
+              <SelectItem value="general" className="font-bangla">টার্গেট ছাড়া সাধারণ সেভিংস</SelectItem>
               {savingsGoals?.map((goal) => (
                 <SelectItem key={goal.id} value={String(goal.id)} className="font-bangla">
                   {goal.name}

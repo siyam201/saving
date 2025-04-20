@@ -4,9 +4,10 @@ import { Progress } from "@/components/ui/progress";
 import { useState } from "react";
 import { AddFundsModal } from "@/components/modals/AddFundsModal";
 import { DepositFundsModal } from "@/components/modals/DepositFundsModal";
+import { WithdrawFundsModal } from "@/components/modals/WithdrawFundsModal";
 import { SavingsGoalModal } from "@/components/modals/SavingsGoalModal";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight, Flag, PlusCircle, TrendingUp, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Flag, PlusCircle, TrendingUp, Wallet } from "lucide-react";
 
 interface OverviewProps {
   balance: number;

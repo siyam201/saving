@@ -12,6 +12,10 @@ import {
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { sendVerificationEmail } from "./mailer";
+import { 
+  sendTransactionNotification, 
+  sendGoalAchievedNotification 
+} from "./notification";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 const JWT_EXPIRES_IN = "7d";
@@ -280,8 +284,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send email notification about balance update
       if (updatedUser) {
         try {
-          // Import at function scope to avoid circular dependency
-          const { sendTransactionNotification } = require('./notification');
+          // Use imported notification service directly
           await sendTransactionNotification(updatedUser, Number(amount), "add_funds");
         } catch (notificationError) {
           console.error("Notification error:", notificationError);
@@ -339,8 +342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const updatedGoal = await storage.getSavingsGoal(Number(savingsGoalId));
         if (updatedGoal && updatedGoal.currentAmount >= updatedGoal.targetAmount) {
           try {
-            // Import at function scope to avoid circular dependency
-            const { sendGoalAchievedNotification } = require('./notification');
+            // Use imported notification service directly
             await sendGoalAchievedNotification(user, updatedGoal.name);
           } catch (notificationError) {
             console.error("Goal achievement notification error:", notificationError);
@@ -369,9 +371,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send email notification about balance update
       if (updatedUser) {
         try {
-          // Import at function scope to avoid circular dependency
-          const { sendTransactionNotification } = require('./notification');
-          await sendTransactionNotification(updatedUser, Number(amount), "deposit");
+          // Use imported notification service
+          const notificationService = await import('./notification');
+          await notificationService.sendTransactionNotification(updatedUser, Number(amount), "deposit");
         } catch (notificationError) {
           console.error("Notification error:", notificationError);
           // Don't fail the transaction if notification fails

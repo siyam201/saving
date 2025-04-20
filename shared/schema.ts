@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -67,6 +68,62 @@ export const insertSavingsPlanSchema = createInsertSchema(savingsPlans).omit({
   id: true,
 });
 
+// Notifications table
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").default(false),
+  createdAt: text("created_at").notNull(), // ISO string
+  type: text("type").notNull(), // 'balance', 'goal_achieved', 'reminder', etc.
+});
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+});
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  transactions: many(transactions),
+  savingsGoals: many(savingsGoals),
+  savingsPlans: many(savingsPlans),
+  notifications: many(notifications),
+}));
+
+export const transactionsRelations = relations(transactions, ({ one }) => ({
+  user: one(users, {
+    fields: [transactions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const savingsGoalsRelations = relations(savingsGoals, ({ one, many }) => ({
+  user: one(users, {
+    fields: [savingsGoals.userId],
+    references: [users.id],
+  }),
+  savingsPlans: many(savingsPlans),
+}));
+
+export const savingsPlansRelations = relations(savingsPlans, ({ one }) => ({
+  user: one(users, {
+    fields: [savingsPlans.userId],
+    references: [users.id],
+  }),
+  savingsGoal: one(savingsGoals, {
+    fields: [savingsPlans.savingsGoalId],
+    references: [savingsGoals.id],
+  }),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+}));
+
 // Type exports
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -79,3 +136,6 @@ export type InsertSavingsGoal = z.infer<typeof insertSavingsGoalSchema>;
 
 export type SavingsPlan = typeof savingsPlans.$inferSelect;
 export type InsertSavingsPlan = z.infer<typeof insertSavingsPlanSchema>;
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
